@@ -1,0 +1,12 @@
+# How to Run the Trading Audit (Super Simple)
+
+## Step-by-step (do this on your computer)
+
+1. Open the folder `trading_report` on your computer.
+2. Open Command Prompt / PowerShell / Terminal inside the folder:
+   - Windows: Hold Shift + Right-click → "Open PowerShell window here"
+   - Mac: Right-click → "New Terminal at Folder"
+
+3. Install the packages (copy-paste this one line):
+   ```bash
+   pip install -r requirements.txt

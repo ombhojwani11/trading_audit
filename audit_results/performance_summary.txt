@@ -1,0 +1,26 @@
+==================================================================
+ FY25-26 TRADING PERFORMANCE AUDIT REPORT
+==================================================================
+Audit Date:       2026-02-17 02:58:55
+Data Source:      trade_ledger.csv
+Total Executions: 2409
+Segments:         Derivative, Equity
+
+------------------------------------------------------------------
+ KEY PERFORMANCE METRICS
+------------------------------------------------------------------
+Net Profit (Realized):  INR 120,174.48
+Profit Factor:          2.22
+Daily Win Rate:         47.2%
+Risk/Reward Ratio:      1 : 5.06
+Max Drawdown:           INR -4,013
+
+------------------------------------------------------------------
+ AVERAGE TRADE STATISTICS
+------------------------------------------------------------------
+Avg Daily Win:          INR 3,086.95
+Avg Daily Loss:         INR 610.23
+
+==================================================================
+*Generated via Python Audit Script using Pandas Analysis*
+==================================================================

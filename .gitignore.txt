@@ -1,0 +1,8 @@
+# Ignore Python junk
+__pycache__/
+*.pyc
+.DS_Store
+
+# Ignore full data for privacy (we keep only sample)
+data/trade_ledger.csv
+!data/sample_trade_ledger.csv
