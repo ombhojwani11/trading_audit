@@ -1,175 +1,234 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
+"""
+=============================================================================
+   AUTOMATED TRADING AUDIT
+=============================================================================
+   
+   INSTRUCTIONS:
+   1. Place your Dhan CSV file in this folder (rename it 'trade_ledger.csv').
+   2. Run this script.
+   3. Open 'audit_results/' to see your Report and Charts.
+=============================================================================
+"""
+
 import os
 import sys
+import datetime
 
-# ==========================================
-# CONFIGURATION
-# ==========================================
-# Make sure this matches your CSV filename exactly
-FILE_NAME = 'TRADE_HISTORY_CSV_1103885929_2025-08-01_2026-02-16_0_.csv'
+# --- 1. AUTO-DEPENDENCY CHECK ---
+try:
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import matplotlib.dates as mdates
+    import numpy as np
+except ImportError as e:
+    print(f"\n[!] CRITICAL ERROR: Missing library '{e.name}'")
+    print("    Please run: pip install pandas matplotlib numpy")
+    sys.exit(1)
 
-def generate_audit():
-    # Auto-detect file path
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(script_dir, FILE_NAME)
+# --- CONFIGURATION ---
+TARGET_FILENAME = 'trade_ledger.csv'
+OUTPUT_FOLDER = 'audit_results'
 
+def setup_environment():
+    if not os.path.exists(OUTPUT_FOLDER):
+        try:
+            os.makedirs(OUTPUT_FOLDER)
+            print(f"[+] Created output directory: ./{OUTPUT_FOLDER}")
+        except Exception:
+            pass
+
+def find_and_load_data():
+    paths = [
+        TARGET_FILENAME, 
+        os.path.join('data', TARGET_FILENAME),
+        os.path.join('raw_data', TARGET_FILENAME)
+    ]
+    
+    for path in paths:
+        if os.path.exists(path):
+            print(f"[+] Found ledger at: {path}")
+            return pd.read_csv(path)
+    
+    print(f"\n[!] ERROR: Could not find '{TARGET_FILENAME}'")
+    print("    Please rename your Dhan file to 'trade_ledger.csv' and place it here.")
+    sys.exit(1)
+
+def run_audit(df):
+    print("[*] Processing trade data...")
+    
+    # 1. METADATA EXTRACTION
+    total_executions = len(df)
+    segments = "Equity" # Default
+    if 'Segment' in df.columns:
+        unique_segments = df['Segment'].dropna().unique()
+        segments = ", ".join(sorted(unique_segments))
+
+    # 2. CLEAN UP
+    if 'Status' in df.columns: df = df[df['Status'] == 'Traded'].copy()
+    
+    # 3. DATE PARSING
+    df['Datetime'] = pd.to_datetime(df['Date'] + ' ' + df['Time'], dayfirst=True, errors='coerce')
+    df = df.dropna(subset=['Datetime']).sort_values('Datetime')
+
+    # 4. FIFO MATCHER (Calculates Exact Realized PnL)
+    open_positions = {} 
+    closed_trades = []
+
+    print("[*] Matching buy/sell orders (FIFO)...")
+    for _, row in df.iterrows():
+        name = row['Name']
+        qty = row['Quantity/Lot']
+        price = row['Trade Price']
+        side = row['Buy/Sell']
+        exit_time = row['Datetime']
+
+        if name not in open_positions: open_positions[name] = []
+        
+        remaining = qty
+        while remaining > 0 and open_positions[name]:
+            if open_positions[name][0]['side'] != side:
+                match_qty = min(remaining, open_positions[name][0]['qty'])
+                entry_price = open_positions[name][0]['price']
+                
+                # Calculate PnL
+                if side == 'SELL': # Closing a Long
+                    pnl = (price - entry_price) * match_qty
+                else: # Closing a Short
+                    pnl = (entry_price - price) * match_qty
+                
+                closed_trades.append({
+                    'Date': exit_time.date(),
+                    'PnL': pnl
+                })
+                
+                remaining -= match_qty
+                open_positions[name][0]['qty'] -= match_qty
+                if open_positions[name][0]['qty'] == 0: open_positions[name].pop(0)
+            else:
+                break 
+
+        if remaining > 0:
+            open_positions[name].append({'side': side, 'qty': remaining, 'price': price})
+
+    if not closed_trades: return None
+
+    # 5. AGGREGATE DATA
+    pnl_df = pd.DataFrame(closed_trades)
+    pnl_df['Date'] = pd.to_datetime(pnl_df['Date'])
+    
+    # Daily Data
+    daily = pnl_df.groupby('Date')['PnL'].sum().reset_index()
+    daily = daily.sort_values('Date')
+    daily['Cumulative'] = daily['PnL'].cumsum()
+    daily['Peak'] = daily['Cumulative'].cummax()
+    daily['Drawdown'] = daily['Cumulative'] - daily['Peak']
+    
+    # --- METRICS CALCULATION (Exact User Formula) ---
+    total_pnl = daily['PnL'].sum()
+    max_dd = daily['Drawdown'].min()
+    
+    # Win Rate
+    win_days = daily[daily['PnL'] > 0]
+    loss_days = daily[daily['PnL'] <= 0]
+    win_rate = (len(win_days) / len(daily)) * 100
+    
+    # Profit Factor
+    gross_win = pnl_df[pnl_df['PnL'] > 0]['PnL'].sum()
+    gross_loss = abs(pnl_df[pnl_df['PnL'] < 0]['PnL'].sum())
+    profit_factor = gross_win / gross_loss if gross_loss != 0 else 0
+    
+    # Averages
+    avg_daily_win = win_days['PnL'].mean() if not win_days.empty else 0
+    avg_daily_loss = abs(loss_days['PnL'].mean()) if not loss_days.empty else 0
+    
+    # Risk Reward Ratio (1 : X)
+    rr_ratio = avg_daily_win / avg_daily_loss if avg_daily_loss != 0 else 0
+
+    metrics = {
+        "Total Net Profit": total_pnl,
+        "Max Drawdown": max_dd,
+        "Profit Factor": profit_factor,
+        "Win Rate": win_rate,
+        "Avg Daily Win": avg_daily_win,
+        "Avg Daily Loss": avg_daily_loss,
+        "RR Ratio": rr_ratio,
+        "Total Executions": total_executions,
+        "Segments": segments,
+        "Source File": TARGET_FILENAME
+    }
+    
+    return daily, metrics
+
+def generate_outputs(daily, metrics):
+    print(f"[*] Generating visual report in '{OUTPUT_FOLDER}/'...")
+    plt.style.use('ggplot') 
+
+    # --- CHART 1: EQUITY CURVE ---
+    plt.figure(figsize=(10, 5))
+    plt.plot(daily['Date'], daily['Cumulative'], color='#107c10', linewidth=2)
+    plt.fill_between(daily['Date'], daily['Cumulative'], 0, color='#107c10', alpha=0.1)
+    plt.title(f"Equity Curve (Net: INR {metrics['Total Net Profit']:,.0f})")
+    plt.ylabel("INR")
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_FOLDER, '1_equity_curve.png'), dpi=150)
+    plt.close()
+
+    # --- CHART 2: DRAWDOWN ---
+    plt.figure(figsize=(10, 3))
+    plt.plot(daily['Date'], daily['Drawdown'], color='#d13438', linewidth=1)
+    plt.fill_between(daily['Date'], daily['Drawdown'], 0, color='#d13438', alpha=0.2)
+    plt.title(f"Risk Analysis (Max Drawdown: INR {metrics['Max Drawdown']:,.0f})")
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_FOLDER, '2_drawdown.png'), dpi=150)
+    plt.close()
+
+    # --- TEXT REPORT (USER SPECIFIED FORMAT) ---
+    report_path = os.path.join(OUTPUT_FOLDER, 'performance_summary.txt')
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
     try:
-        # ---------------------------------------------------------
-        # 1. LOAD & PROCESS DATA
-        # ---------------------------------------------------------
-        print(f"Loading data from: {FILE_NAME}...")
-        
-        # Check if file exists
-        if not os.path.exists(file_path):
-            print(f"ERROR: File not found at {file_path}")
-            return
+        with open(report_path, 'w', encoding='utf-8') as f:
+            f.write("==================================================================\n")
+            f.write(" FY25-26 TRADING PERFORMANCE AUDIT REPORT\n")
+            f.write("==================================================================\n")
+            f.write(f"Audit Date:       {current_time}\n")
+            f.write(f"Data Source:      {metrics['Source File']}\n")
+            f.write(f"Total Executions: {metrics['Total Executions']}\n")
+            f.write(f"Segments:         {metrics['Segments']}\n\n")
+            
+            f.write("------------------------------------------------------------------\n")
+            f.write(" KEY PERFORMANCE METRICS\n")
+            f.write("------------------------------------------------------------------\n")
+            f.write(f"Net Profit (Realized):  INR {metrics['Total Net Profit']:,.2f}\n")
+            f.write(f"Profit Factor:          {metrics['Profit Factor']:.2f}\n")
+            f.write(f"Daily Win Rate:         {metrics['Win Rate']:.1f}%\n")
+            f.write(f"Risk/Reward Ratio:      1 : {metrics['RR Ratio']:.2f}\n")
+            f.write(f"Max Drawdown:           INR {metrics['Max Drawdown']:,.0f}\n\n")
+            
+            f.write("------------------------------------------------------------------\n")
+            f.write(" AVERAGE TRADE STATISTICS\n")
+            f.write("------------------------------------------------------------------\n")
+            f.write(f"Avg Daily Win:          INR {metrics['Avg Daily Win']:,.2f}\n")
+            f.write(f"Avg Daily Loss:         INR {metrics['Avg Daily Loss']:,.2f}\n\n")
+            
+            f.write("==================================================================\n")
+            f.write("*Generated via Python Audit Script using Pandas Analysis*\n")
+            f.write("==================================================================\n")
 
-        df = pd.read_csv(file_path)
-        df.columns = df.columns.str.strip()
-        df['Date'] = pd.to_datetime(df['Date'])
-        
-        # Logic: Sell = Inflow (+), Buy = Outflow (-)
-        df['Cashflow'] = df.apply(lambda row: row['Trade Value'] if row['Buy/Sell'].strip().upper() == 'SELL' else -row['Trade Value'], axis=1)
-
-        # Detect Segments
-        if 'Segment' in df.columns:
-            unique_segments = list(df['Segment'].unique())
-            segment_str = ", ".join(unique_segments)
-        else:
-            segment_str = "Equity & F&O (Options) [Derived]"
-
-        # ---------------------------------------------------------
-        # 2. CALCULATE METRICS
-        # ---------------------------------------------------------
-        # Daily Stats
-        daily_pnl = df.groupby('Date')['Cashflow'].sum().reset_index()
-        daily_pnl['Cumulative P&L'] = daily_pnl['Cashflow'].cumsum()
-        daily_pnl['Running Peak'] = daily_pnl['Cumulative P&L'].cummax()
-        daily_pnl['Drawdown'] = daily_pnl['Cumulative P&L'] - daily_pnl['Running Peak']
-        
-        # Scalar Metrics
-        total_trades = len(df)
-        net_profit = df['Cashflow'].sum()
-        
-        winning_days = daily_pnl[daily_pnl['Cashflow'] > 0]
-        losing_days = daily_pnl[daily_pnl['Cashflow'] < 0]
-        
-        win_rate = (len(winning_days) / len(daily_pnl)) * 100
-        avg_win = winning_days['Cashflow'].mean() if not winning_days.empty else 0
-        avg_loss = abs(losing_days['Cashflow'].mean()) if not losing_days.empty else 0
-        
-        # Safe Profit Factor
-        gross_loss = abs(losing_days['Cashflow'].sum())
-        profit_factor = winning_days['Cashflow'].sum() / gross_loss if gross_loss != 0 else 0
-        
-        max_dd = daily_pnl['Drawdown'].min()
-        risk_reward = avg_win / avg_loss if avg_loss != 0 else 0
-
-        # ---------------------------------------------------------
-        # 3. GENERATE TEXT REPORT (performance_metrics.txt)
-        # ---------------------------------------------------------
-        # We use the Rupee symbol here because we are saving with utf-8 encoding
-        report_text = f"""
-==================================================================
- FY25-26 TRADING PERFORMANCE AUDIT REPORT
-==================================================================
-Audit Date:       {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}
-Data Source:      {FILE_NAME}
-Total Executions: {total_trades}
-Segments:         {segment_str}
-
-------------------------------------------------------------------
- KEY PERFORMANCE METRICS
-------------------------------------------------------------------
-Net Profit (Realized):  ₹{net_profit:,.2f}
-Profit Factor:          {profit_factor:.2f}
-Daily Win Rate:         {win_rate:.1f}%
-Risk/Reward Ratio:      1 : {risk_reward:.2f}
-Max Drawdown:           ₹{max_dd:,.0f}
-
-------------------------------------------------------------------
- AVERAGE TRADE STATISTICS
-------------------------------------------------------------------
-Avg Daily Win:          ₹{avg_win:,.2f}
-Avg Daily Loss:         ₹{avg_loss:,.2f}
-
-==================================================================
-*Generated via Python Audit Script using Pandas Analysis*
-==================================================================
-"""
-        # Save Text Report (Safe Encoding)
-        txt_path = os.path.join(script_dir, 'performance_metrics.txt')
-        with open(txt_path, "w", encoding="utf-8") as f:
-            f.write(report_text)
-        print(f"-> SUCCESS: Metrics saved to 'performance_metrics.txt'")
-
-        # ---------------------------------------------------------
-        # 4. PRINT SUMMARY TO CONSOLE (Safe for Windows)
-        # ---------------------------------------------------------
-        # We use 'INR' here to avoid 'charmap' errors in the console
-        print("-" * 50)
-        print(" FY25-26 TRADING PERFORMANCE AUDIT")
-        print("-" * 50)
-        print(f" Data Source:     {FILE_NAME}")
-        print(f" Segments:        {segment_str}")
-        print(f" Total Trades:    {total_trades}")
-        print("-" * 50)
-        print(f" Net Profit:      INR {net_profit:,.2f}")
-        print(f" Profit Factor:   {profit_factor:.2f}")
-        print(f" Daily Win Rate:  {win_rate:.1f}%")
-        print(f" Avg Win:         INR {avg_win:,.0f}")
-        print(f" Avg Loss:        INR {avg_loss:,.0f}")
-        print(f" Risk/Reward:     1 : {risk_reward:.2f}")
-        print(f" Max Drawdown:    INR {max_dd:,.0f}")
-        print("-" * 50)
-
-        # ---------------------------------------------------------
-        # 5. GENERATE DASHBOARD IMAGE
-        # ---------------------------------------------------------
-        # Hourly Data Prep
-        df['Time'] = pd.to_datetime(df['Time'], format='%H:%M:%S').dt.time
-        df['Hour'] = df['Time'].apply(lambda x: x.hour)
-        hourly_pnl = df.groupby('Hour')['Cashflow'].sum().reset_index()
-        hourly_colors = ['#00C853' if x > 0 else '#FF5252' for x in hourly_pnl['Cashflow']]
-
-        fig = plt.figure(figsize=(16, 12))
-        grid = plt.GridSpec(2, 2, height_ratios=[1, 0.8], hspace=0.3, wspace=0.2)
-
-        # Chart 1: Equity Curve
-        ax1 = fig.add_subplot(grid[0, :])
-        ax1.plot(daily_pnl['Date'], daily_pnl['Cumulative P&L'], color='#00C853', linewidth=2)
-        ax1.fill_between(daily_pnl['Date'], daily_pnl['Cumulative P&L'], color='#00C853', alpha=0.1)
-        ax1.set_title('Account Growth (Equity Curve)', fontsize=14, fontweight='bold')
-        ax1.grid(True, linestyle='--', alpha=0.3)
-        ax1.set_ylabel('Net Profit')
-
-        # Chart 2: Drawdown
-        ax2 = fig.add_subplot(grid[1, 0])
-        ax2.plot(daily_pnl['Date'], daily_pnl['Drawdown'], color='#FF5252', linewidth=1)
-        ax2.fill_between(daily_pnl['Date'], daily_pnl['Drawdown'], color='#FF5252', alpha=0.1)
-        ax2.set_title('Risk Profile: Drawdown', fontsize=12, fontweight='bold')
-        ax2.grid(True, linestyle='--', alpha=0.3)
-        ax2.set_ylabel('Drawdown')
-
-        # Chart 3: Hourly Efficiency
-        ax3 = fig.add_subplot(grid[1, 1])
-        sns.barplot(x='Hour', y='Cashflow', data=hourly_pnl, palette=hourly_colors, ax=ax3)
-        ax3.set_title('Time-of-Day Efficiency', fontsize=12, fontweight='bold')
-        ax3.axhline(0, color='black', linewidth=0.8)
-        ax3.set_ylabel('Net P&L')
-
-        fig.suptitle('FY25-26 Discretionary Trading Performance Audit', fontsize=20, fontweight='bold', y=0.95)
-        
-        img_path = os.path.join(script_dir, 'trading_performance_dashboard.png')
-        plt.savefig(img_path, dpi=300)
-        print(f"-> SUCCESS: Dashboard saved to 'trading_performance_dashboard.png'")
-
+        print(f"[+] Report saved: {report_path}")
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        print(f"Error: {e}")
+        print(f"[!] Error saving report: {e}")
 
+# --- MAIN EXECUTION ---
 if __name__ == "__main__":
-    generate_audit()
+    setup_environment()
+    try:
+        df = find_and_load_data()
+        result = run_audit(df)
+        if result:
+            generate_outputs(*result)
+            print("\n[SUCCESS] Audit Complete! Check 'audit_results' folder.")
+        else:
+            print("\n[!] No valid trades found.")
+    except Exception as e:
+        print(f"\n[!] Error: {e}")
