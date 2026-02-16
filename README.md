@@ -1,43 +1,54 @@
-# ₹1,20,290 Realized Net Profit | Discretionary Intraday F&O Trading Audit  
-**Equity & Options (Stocks) – August 2025 to February 2026**
+# ₹1,20,290 Net Realized Profit  
+**Discretionary Intraday Trading in Equity & F&O Options (Stocks)**  
+August 2025 – February 2026 | Fully Audited with Python
 
-![Trading Performance Dashboard](trading_performance_dashboard.png)
+![Equity Curve](audit_results/1_equity_curve.png)  
+![Maximum Drawdown](audit_results/2_drawdown.png)
 
-### Performance Highlights
-*(All metrics independently verified by `code/audit_script.py` using full trade ledger)*
+### Performance Snapshot
+| Metric                  | Value              | Insight                              |
+|-------------------------|--------------------|--------------------------------------|
+| **Segments**            | Equity & F&O Options (Stocks) | Real-money trades only              |
+| **Net P&L**             | **₹1,20,290**      | 6.5 months                           |
+| **Profit Factor**       | **4.53**           | World-class edge                     |
+| **Risk-Reward Ratio**   | **1 : 5.08**       | Avg win ₹3,087 vs avg loss ₹608     |
+| **Daily Win Rate**      | **47.2%**          | Closing basis                        |
+| **Maximum Drawdown**    | **₹3,909**         | Only 3.2% of total profit            |
 
-| Metric                  | Value              | Insight                                      |
-|-------------------------|--------------------|----------------------------------------------|
-| **Segments Traded**     | Equity & F&O Options (Stocks) | Full ledger confirmed                       |
-| **Net Realized P&L**    | **₹1,20,290**      | 6.5 months                                   |
-| **Profit Factor**       | **4.53**           | Elite-level edge                             |
-| **Daily Win Rate**      | **47.2%**          | Closing basis                                |
-| **Risk-Reward Ratio**   | **1 : 5.08**       | Avg win ₹3,087 vs avg loss ₹608             |
-| **Maximum Drawdown**    | **₹3,909**         | < 4% of total profit                         |
+### The Union Budget 2026 Masterstroke
+While refining my intraday strategies and psychology throughout 2025, I identified the Union Budget as a once-in-a-year high-conviction event.  
 
-### Union Budget 2026 – The Defining Trade
-Recognising the Union Budget as a high-conviction opportunity, I dedicated three months to intensive preparation while simultaneously refining my intraday strategies. Drawing on my 2024-25 budget experience, I analysed every word of the previous 5–6 budgets, mapped market expectations versus reality, and backtested every potential setup.  
+Drawing from my 2024-25 experience (where I lost a few thousand), I spent **three dedicated months** preparing:
+- Word-by-word analysis of the last 5–6 budget speeches
+- Mapping market expectations vs actual outcomes
+- Backtesting every possible setup I would have taken in prior years
+- Trading the pre-budget rally with precision
 
-This preparation enabled me to generate the **entire ₹1,20,290 net profit in under one hour** during the 2026 Budget speech. The depth of analysis was such that the exact announcements were almost secondary — the edge was already built in.
+**Result**: I captured the **entire ₹1,20,290 net profit in under one hour** during the 2026 Budget speech. My preparation was so thorough that the exact announcements almost didn’t matter — the edge was already locked in.
 
-### Trader Discipline & Self-Taught Resilience
-After years of direct market feedback, I have developed unbreakable emotional discipline and resistance to psychological pressure. Every aspect of my trading — strategy development, risk rules, and execution — has been self-taught through relentless iteration. This real-world grit and battle-tested consistency is rare among finance graduates and gives me a clear edge in high-stakes environments.
+### Self-Taught Discipline & Market Grit
+After years of being humbled by the market, I built unbreakable emotional control and iron-clad discipline.  
+Every strategy, risk rule, and psychological framework I use is 100% self-taught through relentless iteration and real-money feedback.  
+
+This battle-tested resilience and execution consistency is something no textbook or fresh finance graduate can replicate.
 
 ### Trading Infrastructure
-- **Brokers**: Zerodha, Dhan  
-- **Screening Platforms**: FoxNet, TX3, TradeTiger (Sharekhan)  
-- **Charting & Analysis**: TradingView + Custom Python
+- **Brokers**: Zerodha + Dhan  
+- **Screening**: FoxNet, TX3, TradeTiger (Sharekhan)  
+- **Charting**: TradingView + Custom Python Analysis
 
 ### Technical Stack & Methodology
-- **Language & Libraries**: Python 3 (Pandas, Matplotlib, Seaborn, NumPy)  
-- **Approach**: Discretionary news-based momentum trading in F&O stocks  
-- **Edge**: Asymmetric risk-reward with focus on high-impact events and optimal 09:15–12:00 IST window  
-- **AI Acceleration**: Leveraged LLMs (Grok, Claude, Gemini) to rapidly iterate scripts and backtesting frameworks  
+- **Language**: Python 3  
+- **Core Libraries**: Pandas, Matplotlib, Seaborn, NumPy  
+- **Style**: Discretionary news-based momentum trading  
+- **Edge**: Asymmetric risk-reward focused on high-impact events and 09:15–12:00 IST window  
+- **Audit System**: Fully reproducible Python script with FIFO PnL matching, equity curve, and drawdown analysis
 
-**Complete setup, execution instructions, and reproducibility steps** are available in the `instructions/` folder (or `RUNNING.md`).
+**Complete setup, installation & running instructions** → [RUNNING.md](RUNNING.md)
 
-**Full raw ledger** (`data/trade_ledger.csv`) is included for transparency.  
-Audit script (`code/audit_script.py`) generates fresh reports and charts on every run.
+**Full trade ledger** (`data/trade_ledger.csv`) included for complete transparency.  
+Audit script (`code/audit_script.py`) regenerates all charts and metrics in one click.
 
 ---
-*Built and audited end-to-end by a self-taught trader demonstrating both market edge and professional-grade data analysis skills.*
+
+*Real money. Real edge. Real discipline. Built from scratch by a self-taught trader.*
