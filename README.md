@@ -2,9 +2,6 @@
 **Discretionary Intraday Trading in Equity & F&O Options (Stocks)**  
 August 2025 – February 2026 | Fully Audited with Python
 
-![Equity Curve](audit_results/1_equity_curve.png)  
-![Maximum Drawdown](audit_results/2_drawdown.png)
-
 ### Performance Snapshot
 | Metric                  | Value              | Insight                              |
 |-------------------------|--------------------|--------------------------------------|
@@ -14,6 +11,9 @@ August 2025 – February 2026 | Fully Audited with Python
 | **Risk-Reward Ratio**   | **1 : 5.08**       | Avg win ₹3,087 vs avg loss ₹608     |
 | **Daily Win Rate**      | **47.2%**          | Closing basis                        |
 | **Maximum Drawdown**    | **₹3,909**         | Only 3.2% of total profit            |
+
+![Equity Curve](audit_results/1_equity_curve.png)  
+![Maximum Drawdown](audit_results/2_drawdown.png)
 
 ### The Union Budget 2026 Masterstroke
 While refining my intraday strategies and psychology throughout 2025, I identified the Union Budget as a once-in-a-year high-conviction event.  
