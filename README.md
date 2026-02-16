@@ -5,7 +5,7 @@ August 2025 – February 2026 | Fully Audited with Python
 ### Performance Snapshot
 | Metric                  | Value              | Insight                              |
 |-------------------------|--------------------|--------------------------------------|
-| **Segments**            | Equity & F&O Options (Stocks) | Real-money trades only              |
+| **Segments**            | Equity & Options (Stocks) | Real-money trades only              |
 | **Net P&L**             | **₹1,20,290**      | 6.5 months                           |
 | **Profit Factor**       | **4.53**           | World-class edge                     |
 | **Risk-Reward Ratio**   | **1 : 5.08**       | Avg win ₹3,087 vs avg loss ₹608     |
