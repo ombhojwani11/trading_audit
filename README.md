@@ -48,6 +48,11 @@ This battle-tested resilience and execution consistency is something no textbook
 ### Experience
 - 5 years of experience in market which includes 2 years as intraday trader. Took over 8800 trades in equity and options. Started as an options trader in Nifty and Banknifty but later shifted to FnO stocks. From basic Technical Analysis to creating python scripts using AI which can process gb's of data, learnt each and everything along the way.
 
+### 🔗 Related Project
+**Algorithmic Swing Trading System for NSE F&O**
+→ [NSE-Institutional-Swing-Strategy](https://github.com/ombhojwani11/NSE-Institutional-Swing-Strategy)
+*(Swing Trading | Institutional footprint detection | Python data pipeline| Automated Excel heatmaps)*
+
 **Complete setup, installation & running instructions** → [RUNNING.md](RUNNING.md)
 **Full trade ledger** (`data/trade_ledger.csv`) included for complete transparency.  
 Audit script (`code/audit_script.py`) regenerates all charts and metrics in one click.
