@@ -46,7 +46,7 @@ This battle-tested resilience and execution consistency is something no textbook
 - **Audit System**: Fully reproducible Python script with FIFO PnL matching, equity curve, and drawdown analysis
 
 ## Experience
-- 5 years of experience in market which includes 2 years as intraday trader. Took over 8800 trades in equity and options. Started as an options trader in Nifty and Banknifty but later shifted to FnO stocks. From basic Technical Analysis to creating python scripts using AI which can process gb's of data, learnt each and everything along the way.
+5 years of experience in market which includes 2 years as intraday trader. Took over 8800 trades in equity and options. Started as an options trader in Nifty and Banknifty but later shifted to FnO stocks. From basic Technical Analysis to creating python scripts using AI which can process gb's of data, learnt each and everything along the way.
 
 ## Related Project
 **Algorithmic Swing Trading System for NSE F&O**
